@@ -21,7 +21,6 @@ router = APIRouter(prefix="/api", tags=["Categories"])
 def list_category(db: SessionDepend):
     db_categories = db.exec(select(Category)).all()
     total = db.exec(select(func.count(col(Category.id)))).one()
-    print("total", type(total))
     return CategoryList(data=db_categories, total=total)
 
 
