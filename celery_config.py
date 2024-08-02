@@ -1,9 +1,10 @@
 from celery import Celery
+from config import settings
 
-app = Celery("f5mobile_cms", broker="redis://45.124.95.107:6379/0")
+app = Celery("f5mobile_cms", broker=settings.REDIS_BROKER_URL)
 
 app.conf.update(
-    result_backend="redis://45.124.95.107:6379/1",
+    result_backend=settings.REDIS_BACKEND_URL,
     task_serializer="json",
     accept_content=["json"],  # Ignore other content
     result_serializer="json",
