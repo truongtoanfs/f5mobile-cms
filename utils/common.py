@@ -1,4 +1,4 @@
-from sqlmodel import select, Session, update, func, col
+from sqlmodel import select, Session, update, func, col, desc, asc
 from models import Category, Subcategory, Product
 from fastapi import HTTPException, status
 
@@ -39,10 +39,10 @@ def get_db_products(
         query = select(Product).filter(Product.name.like(search_name))
     else:
         query = select(Product)
+    count_query = select(func.count()).select_from(query.subquery())
 
-    data = db.exec(query.limit(limit).offset(offset)).all()
-    total = db.exec(select(func.count(col(Product.id)))).one()
-
+    data = db.exec(query.limit(limit).offset(offset).order_by(desc(Product.created_at))).all()
+    total = db.exec(count_query).one()
     return {"data": data, "total": total}
 
 

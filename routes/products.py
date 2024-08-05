@@ -16,6 +16,8 @@ from utils.common import (
     get_db_products,
     get_product,
     update_db_product,
+    get_category,
+    get_subcategory,
 )
 from dependencies import SessionDepend
 
@@ -37,10 +39,9 @@ def handleExel(excel_file):
                 products_data.append(product.model_dump())
             return products_data
     except Exception as e:
-        print(f"Error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error processing Excel file",
+            detail=str(e),
         )
 
 
@@ -56,7 +57,12 @@ def list_product(
 
 
 @router.post("/products", response_model=SuccessStatus)
-def create_product(product: ProductCreate):
+def create_product(product: ProductCreate, db: SessionDepend):
+    if product.category_id:
+        _ = get_category(category_id=product.category_id, db=db)
+    if product.subcategory_id:
+         _ = get_subcategory(subcategory_id=product.subcategory_id, db=db)
+
     products = [product.model_dump()]
     writeDb(products=products)
     return SuccessStatus()

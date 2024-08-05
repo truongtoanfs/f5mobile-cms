@@ -9,7 +9,7 @@ from models import (
     SubcategoryUpdate,
     SuccessStatus,
 )
-from utils.common import get_subcategory
+from utils.common import get_subcategory, get_category
 from dependencies import SessionDepend
 
 
@@ -25,6 +25,8 @@ def list_subcategory(db: SessionDepend):
 
 @router.post("/subcategories", response_model=SubcategoryPublic)
 def create_subcategory(subcategory: SubcategoryCreate, db: SessionDepend):
+    _ = get_category(category_id=subcategory.category_id, db=db)
+
     subcategory_data = subcategory.model_dump()
     db_subcategory = Subcategory(**subcategory_data)
     db.add(db_subcategory)
