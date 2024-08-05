@@ -1,6 +1,8 @@
 services:
   celery:
     image: tf_01/f5mobile-cms:latest
+    env_file:
+      - .env
     command: celery -A workers.tasks worker --loglevel=INFO
 
   backend:
