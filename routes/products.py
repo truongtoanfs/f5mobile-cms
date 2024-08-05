@@ -49,10 +49,12 @@ def handleExel(excel_file):
 def list_product(
     db: SessionDepend,
     name: str | None = None,
-    limit: Annotated[int | None, Query(gt=0)] = None,
-    page: Annotated[int | None, Query(gt=0)] = None,
+    limit: Annotated[int, Query(gt=0)] = 100,
+    page: Annotated[int, Query(gt=0)] = 1,
+    sort_key: Annotated[str, Query(pattern="^(new_price|created_at|name|old_price|updated_at)$")] = "name",
+    order_by: Annotated[str, Query(pattern="^(desc|asc)$")] = "desc",
 ):
-    db_products = get_db_products(db=db, name=name, limit=limit, page=page)
+    db_products = get_db_products(db=db, name=name, limit=limit, page=page, order_by=order_by, sort_key=sort_key)
     return db_products
 
 

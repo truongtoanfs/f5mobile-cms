@@ -1,4 +1,4 @@
-from sqlmodel import select, Session, update, func, col, desc, asc
+from sqlmodel import select, Session, update, func, desc, asc
 from models import Category, Subcategory, Product
 from fastapi import HTTPException, status
 
@@ -23,25 +23,27 @@ def get_subcategory(subcategory_id: str, db: Session):
 
 def get_db_products(
     db: Session,
-    name: str | None = None,
-    limit: int | None = None,
-    page: int | None = None,
+    limit: int,
+    page: int,
+    sort_key: str,
+    order_by: str,
+    name: str | None = None
 ):
-    if limit is None:
-        limit = 100
-    if page is None:
-        page = 1
-
     offset = (page - 1) * limit
 
-    if name is not None:
+    if name is None:
+        query = select(Product)
+    else:
         search_name = "%{}%".format(name)
         query = select(Product).filter(Product.name.like(search_name))
+    
+    sort_column = getattr(Product, sort_key)
+    if (order_by ==  "asc"):
+        data = db.exec(query.limit(limit).offset(offset).order_by(asc(sort_column))).all()
     else:
-        query = select(Product)
-    count_query = select(func.count()).select_from(query.subquery())
+        data = db.exec(query.limit(limit).offset(offset).order_by(desc(sort_column))).all()
 
-    data = db.exec(query.limit(limit).offset(offset).order_by(desc(Product.created_at))).all()
+    count_query = select(func.count()).select_from(query.subquery())
     total = db.exec(count_query).one()
     return {"data": data, "total": total}
 
