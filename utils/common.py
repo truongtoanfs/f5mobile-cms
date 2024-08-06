@@ -1,3 +1,4 @@
+import os
 from sqlmodel import select, Session, update, func, desc, asc
 from models import Category, Subcategory, Product
 from fastapi import HTTPException, status
@@ -68,3 +69,11 @@ def update_db_product(db: Session, product_id: str, payload: dict):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error update database!",
         )
+    
+def check_file_existence(directory: str, file_name: str):
+    file_names = os.listdir(directory)
+    if file_names.count(file_name) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="file not exit!"
+        )
+    return os.path.join(directory, file_name)

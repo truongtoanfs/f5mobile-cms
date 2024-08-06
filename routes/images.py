@@ -1,49 +1,54 @@
 import os
 from fastapi import APIRouter, UploadFile, Path, HTTPException, status
+from fastapi.responses import FileResponse
 from typing import Annotated
 from models import SuccessStatus
+from utils.common import check_file_existence
 
 router = APIRouter(prefix="/api", tags=["Images"])
 
 
 images_directory = os.path.join(os.getcwd(), "images")
 
-
 @router.get("/images", response_model=list[str])
 def list_images():
     file_names = os.listdir(images_directory)
     paths = []
     for name_file in file_names:
-        file_path = os.path.join(images_directory, name_file)
+        file_path = f"/api/images/{name_file}"
         paths.append(file_path)
     return paths
 
 
-@router.post("/images", response_model=list[str])
+@router.post("/images", response_model=SuccessStatus)
 async def upload_images(files: list[UploadFile]):
     try:
-        saved_file_paths = []
-
         for file in files:
-            file_path = os.path.join(images_directory, file.filename)
+            if not file.content_type.startswith("image/"):
+                raise ValueError("File must be an image")
             with open(f"images/{file.filename}", "wb") as file_open:
                 data = await file.read()
                 file_open.write(data)
-            saved_file_paths.append(file_path)
-        return saved_file_paths
+        return SuccessStatus()
+
     except Exception as e:
-        print(f"Error: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.get("/images/{file_name}", response_class=FileResponse)
+def detail_image(
+    file_name: Annotated[str, Path(description="valid format: file_name.jpg")]
+):
+    image_path = check_file_existence(directory=images_directory, file_name=file_name)
+
+    return FileResponse(image_path)
 
 
 @router.delete("/images/{file_name}", response_model=SuccessStatus)
 async def delete_image(
     file_name: Annotated[str, Path(description="valid format: file_name.jpg")]
 ):
-    print(type(file_name))
-    file_names = os.listdir(images_directory)
-    if file_names.count(file_name) == 0:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="file not exit!"
-        )
-    os.remove(f"images/{file_name}")
+    image_path = check_file_existence(directory=images_directory, file_name=file_name)
+    os.remove(image_path)
+
     return SuccessStatus()
